@@ -34,6 +34,7 @@ const verifyToken = (req, res, next) => {
     if(err){
       return res.status(401).send({message: 'Authorized access'})
     }
+    req.user = decoded
     next()
   })
   // const token = req.cookies;
@@ -92,15 +93,18 @@ async function run() {
     });
 
     // job application api
-    app.post("/job_applications",verifyToken, async (req, res) => {
+    app.post("/job_applications", async (req, res) => {
       const application = req.body;
       const result = await jobApplicationCollection.insertOne(application);
       res.send(result);
     });
 
-    app.get("/job_application", async (req, res) => {
+    app.get("/job_application",verifyToken, async (req, res) => {
       const email = req.query.email;
       const query = { applicant_email: email };
+      if(req.user.email !== req.query.email ){
+        return res.status(403).send({message: 'forbidden action'})
+      }
       console.log(req.cookies)
       const result = await jobApplicationCollection.find(query).toArray();
 
